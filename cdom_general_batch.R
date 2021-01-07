@@ -1,4 +1,4 @@
-###### Processing script for CDOM files
+###### Processing script for CDOM files (old spectrophotometer, Lambda)
 
 ## 1 run script named "read_sp"-> function to chnage sp files to txt
 ## 2 run script "sp_to_text" transfer the sp files to txt files and saves them in folderin
