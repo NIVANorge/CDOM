@@ -1,3 +1,5 @@
+rm(list = ls())
+
 # ------------- read_sp function ---------------------------------
 read_sp <- function( filename, identifier = "#DATA", colnames=c("wl","absorbance")){
   # read df as one column
