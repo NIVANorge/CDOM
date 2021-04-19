@@ -30,7 +30,7 @@ getwd()
 folderin<-"varflom2021/ind"
 folderout <-"varflom2021/processed/" 
 folderout_results<- "varflom2021/results/"
-folderout_plots<- "varflom2021/plots/spectras"
+folderout_plots<- "varflom2021/plots/spectras/"
 
 #Add logbook (check for latest version on K)
 logbook <- read.delim ("log_cary_2104.txt")
@@ -77,10 +77,6 @@ filelist<-list.files(path=folderin,pattern="*.csv")
 # set constants
 l<-0.1 # length of the cuvette- here 10 cm= 0.1 m, make sure it is correct
 k<-2.302585 # ln coefficient
-
-######
-#START the scrip from here!!!
-##### 
 
 
 #Deletes the summary datafiles if they exists
