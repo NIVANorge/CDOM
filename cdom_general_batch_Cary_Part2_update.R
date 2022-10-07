@@ -28,14 +28,24 @@ library(data.table)
 dir()
 getwd()
 
+#dir.create(paste0("FB2021_extra/","/ind"))
+dir.create(paste0("ØKOKYST_2021/", "/results"))
+dir.create(paste0("ØKOKYST_2021/", "/processed"))
+dir.create(paste0("ØKOKYST_2021/", "/plots"))
+dir.create(paste0("ØKOKYST_2021/", "/plots/", "/spectra"))
+dir.create(paste0("ØKOKYST_2021/", "/plots/", "/models"))
 
-folderin<-"cdom_test_methods/ind"
-folderout <-"cdom_test_methods/processed/" 
-folderout_results<- "cdom_test_methods/"
-folderout_plots<- "cdom_test_methods/plots/spectras/"
+# change first part of name to the correct folder
+
+folderin<-"cdom_cary_NOLASIS_WP2/ind"
+folderin<-"cdom_cary_NOLASIS_WP2/CDOM_NOLA_07092022/ind/"
+
+folderout <-"cdom_cary_NOLASIS_WP2/CDOM_NOLA_07092022/processed/" 
+folderout_results<- "cdom_cary_NOLASIS_WP2/CDOM_NOLA_07092022/"
+folderout_plots<- "cdom_cary_NOLASIS_WP2/CDOM_NOLA_07092022/plots/spectra/"
 
 #Add logbook (check for latest version on K)
-logbook <- read.delim ("log_cary_2104.txt")
+logbook <- read.delim ("ØKOKYST_2021/log_cary.txt")
 logbook$Sampling_date<- as.character(logbook$Sampling_date)
 logbook$Sampling_date <- as.Date(logbook$Sampling_date, "%d/%m/%Y")
 
@@ -52,7 +62,13 @@ logbook <- logbook %>%
 filelist<-list.files(path=folderin,pattern="*.csv")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#calculate absorption from absorbance with correct cuvette length
+# correct the absorbance spectra for refraction scattering by substracting the average value betwen 700-800 nm 
+# from the spectra according to;
+# Green, S. A., & Blough, N. V. (1994). Optical absorption and fluorescence properties of chromophoric dissolved organic matter in natural waters. Limnology and Oceanography, 39(8), 1903–1916. https://doi.org/10.4319/lo.1994.39.8.1903
+# Bricaud, A., Morel, A., & Prieur, L. (1981). Absorption by Dissolved Organic Matter of the Sea (Yellow Substance) in the UV and Visible Domains. Limnology and Oceanography, 26(1), 43–53. https://doi.org/10.2307/2835805
+
+
+# calculate absorption from absorbance with correct cuvette length
 
 #aCDOM(λ)= 2.3020585*absorbance(λ)/0.1
 
@@ -72,6 +88,7 @@ k<-2.302585 # ln coefficient
 
 if(exists("dfabsSummary")){
   rm("dfabsSummary")
+  
 }
 
 #read in files and save as ind files with wl, absorbance and absorption
@@ -87,9 +104,22 @@ for(file in filelist){
    #rename col name
   colnames(df)[2] <- 'absorbance'
   
-  # calculate absorption m-1
-  df <- df %>% 
-      mutate(absorption = (k*absorbance)/l) # 5) calculate absorption m-1
+  # Account for absorbance Offset by substract the average absorbance  at 700-800 nm
+  avg<- df%>% filter(wl>=700, wl<=800)%>%
+   summarise(avg=mean(absorbance))
+  avg$avg<- abs(avg$avg)
+    # calculate absorption m-1 based on corrected samples
+
+  df<-df %>% mutate(absorbance_corr=absorbance+avg$avg)
+
+
+ df <- df %>%
+    mutate(absorption = (k*absorbance_corr)/l) # 5) calculate absorption m-1
+
+  #without correction
+ # df <- df %>% 
+ #    mutate(absorption = (k*absorbance)/l) # 5) calculate absorption m-1
+ # 
   # make as new processed file and save it 
  
   # set the name of output file
@@ -103,8 +133,10 @@ for(file in filelist){
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
 # plots of absorption
  
-  plot(df$wl, df$absorption, pch=20,cex=0.8, xlab= "Wavelength, nm",ylab=expression(paste("Absorption, m"^"-1")))
+  df<- filter (df, wl>=240)
+  plot(df$wl, df$absorption,xlim=c(350,700), pch=20,cex=0.8, xlab= "Wavelength, nm",ylab=expression(paste("Absorption, m"^"-1")))
   title(currentname) # add fine name to plot
+  
   
   dev.print(jpeg,width=853, height=626, file=paste0(folderout_plots,"/",currentname,"_abs", ".png"))
   
